@@ -49,7 +49,7 @@ jobs:
         run: npm run lint
 
       - name: Run Jest tests
-        run: npm test
+        run: npx jest --config jest.config.cjs --passWithNoTests --forceExit
         env:
           NODE_ENV: test
 
