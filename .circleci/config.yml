@@ -110,7 +110,7 @@ jobs:
       - install-deps
       - run:
           name: Run Jest tests
-          command: npm test
+          command: npm test -- --forceExit
           environment:
             NODE_ENV: test
 
