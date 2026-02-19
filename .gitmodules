@@ -1,0 +1,6 @@
+[submodule "vet-sync-api"]
+	path = vet-sync-api
+	url = https://github.com/NexNovaUttec/vet-sync-api.git
+[submodule "vet-sync-app"]
+	path = vet-sync-app
+	url = https://github.com/NexNovaUttec/vet-sync-app.git
