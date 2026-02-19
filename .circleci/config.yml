@@ -57,10 +57,10 @@ jobs:
       - install-deps
       - run:
           name: Run Jest tests
-          command: npx jest --config jest.config.cjs --passWithNoTests
+          command: npx jest --config jest.config.cjs --passWithNoTests --forceExit
           environment:
             NODE_ENV: test
-            # Set these in CircleCI → Project Settings → Environment Variables
+            NODE_OPTIONS: --experimental-vm-modules
             JWT_SECRET: ${JWT_SECRET}
             SUPABASE_URL: ${SUPABASE_URL}
             SUPABASE_KEY: ${SUPABASE_KEY}

@@ -51,12 +51,11 @@ jobs:
         run: npm run lint
 
       - name: Run Jest tests
-        # The package.json "test" script is a placeholder; run jest directly
-        run: npx jest --config jest.config.cjs --passWithNoTests
+        # ESM projects require --experimental-vm-modules
+        run: npx jest --config jest.config.cjs --passWithNoTests --forceExit
         env:
           NODE_ENV: test
-          # Add these secrets in:
-          #   GitHub → Settings → Secrets and variables → Actions
+          NODE_OPTIONS: --experimental-vm-modules
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
