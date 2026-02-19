@@ -1,0 +1,93 @@
+name: VetSync App – CI
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - "vet-sync-app/**"
+      - ".github/workflows/app-ci.yml"
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "vet-sync-app/**"
+      - ".github/workflows/app-ci.yml"
+
+defaults:
+  run:
+    working-directory: vet-sync-app
+
+jobs:
+  # ──────────────────────────────────────────────
+  # JOB 1 – Install, lint, test and build
+  # ──────────────────────────────────────────────
+  build:
+    name: Lint, Test & Build (Node ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: ["20.x", "22.x"]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+          cache-dependency-path: "vet-sync-app/package.json"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run Jest tests
+        run: npm test
+        env:
+          NODE_ENV: test
+
+      - name: Build with Vite
+        run: npm run build
+        env:
+          # Add this secret in:
+          #   GitHub → Settings → Secrets and variables → Actions
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+
+      # Upload the dist/ folder as a downloadable artifact
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ matrix.node-version }}
+          # path is relative to the repo root, not working-directory
+          path: vet-sync-app/dist/
+          retention-days: 7
+          if-no-files-found: error
+
+  # ──────────────────────────────────────────────
+  # JOB 2 – Report artifact size
+  # ──────────────────────────────────────────────
+  report-size:
+    name: Report bundle size
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Download artifact (node 22.x)
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-22.x
+          path: dist
+
+      - name: Print bundle size
+        run: |
+          echo "=== dist/ contents ===" 
+          du -sh dist/
+          echo "=== JS files ===" 
+          find dist/ -name "*.js" -exec du -h {} \; | sort -rh | head -20
+          echo "=== CSS files ===" 
+          find dist/ -name "*.css" -exec du -h {} \; | sort -rh | head -10

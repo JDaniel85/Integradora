@@ -1,0 +1,161 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# VetSync – CircleCI Configuration  (monorepo)
+# Projects: vet-sync-api (Node.js/Express) · vet-sync-app (React/Vite)
+# ─────────────────────────────────────────────────────────────────────────────
+
+version: 2.1
+
+# ── Reusable orbs ─────────────────────────────────────────────────────────────
+orbs:
+  node: circleci/node@6.1.0
+
+# ── Reusable executors ────────────────────────────────────────────────────────
+executors:
+  node-22:
+    docker:
+      - image: cimg/node:22.11
+    resource_class: medium
+
+# ── Reusable commands ─────────────────────────────────────────────────────────
+commands:
+  install-deps:
+    description: "Install npm dependencies (no lock file yet; use 'npm ci' after committing package-lock.json)"
+    steps:
+      - run:
+          name: Install dependencies
+          command: npm install
+
+# ══════════════════════════════════════════════════════════════════════════════
+# JOBS
+# ══════════════════════════════════════════════════════════════════════════════
+jobs:
+
+  # ── vet-sync-api ─────────────────────────────────────────────────────────────
+  api-lint:
+    executor: node-22
+    working_directory: ~/repo/vet-sync-api
+    steps:
+      - checkout:
+          path: ~/repo
+      - install-deps
+      - run:
+          name: Run ESLint
+          command: npm run lint
+
+  api-test:
+    executor: node-22
+    working_directory: ~/repo/vet-sync-api
+    steps:
+      - checkout:
+          path: ~/repo
+      - install-deps
+      - run:
+          name: Run Jest tests
+          command: npx jest --config jest.config.cjs --passWithNoTests
+          environment:
+            NODE_ENV: test
+            # Set these in CircleCI → Project Settings → Environment Variables
+            JWT_SECRET: ${JWT_SECRET}
+            SUPABASE_URL: ${SUPABASE_URL}
+            SUPABASE_KEY: ${SUPABASE_KEY}
+      - store_test_results:
+          # Jest must output JUnit XML for this to populate the Tests tab.
+          # Add --reporters=default --reporters=jest-junit and install jest-junit
+          # to enable it. Kept here as a placeholder.
+          path: ~/repo/vet-sync-api/test-results
+
+  api-syntax-check:
+    executor: node-22
+    working_directory: ~/repo/vet-sync-api
+    steps:
+      - checkout:
+          path: ~/repo
+      - run:
+          name: Verify app.js syntax
+          command: node --check app.js
+
+  # ── vet-sync-app ─────────────────────────────────────────────────────────────
+  app-lint:
+    executor: node-22
+    working_directory: ~/repo/vet-sync-app
+    steps:
+      - checkout:
+          path: ~/repo
+      - install-deps
+      - run:
+          name: Run ESLint
+          command: npm run lint
+
+  app-test:
+    executor: node-22
+    working_directory: ~/repo/vet-sync-app
+    steps:
+      - checkout:
+          path: ~/repo
+      - install-deps
+      - run:
+          name: Run Jest tests
+          command: npm test
+          environment:
+            NODE_ENV: test
+
+  app-build:
+    executor: node-22
+    working_directory: ~/repo/vet-sync-app
+    steps:
+      - checkout:
+          path: ~/repo
+      - install-deps
+      - run:
+          name: Build with Vite
+          command: npm run build
+          environment:
+            # Set this in CircleCI → Project Settings → Environment Variables
+            VITE_API_URL: ${VITE_API_URL}
+      - run:
+          name: Verify dist/ was created
+          command: |
+            echo "=== Build output ==="
+            du -sh dist/
+            find dist/ -name "*.js" | wc -l | xargs -I{} echo "{} JS chunks generated"
+            find dist/ -name "*.css" | wc -l | xargs -I{} echo "{} CSS files generated"
+      - store_artifacts:
+          # dist/ folder available for download from the CircleCI Artifacts tab
+          path: dist
+          destination: frontend-build
+
+# ══════════════════════════════════════════════════════════════════════════════
+# WORKFLOWS
+# ══════════════════════════════════════════════════════════════════════════════
+workflows:
+  # ── API pipeline ──────────────────────────────────────────────────────────
+  api-pipeline:
+    jobs:
+      - api-lint:
+          filters:
+            branches:
+              only:
+                - main
+                - develop
+      - api-test:
+          requires:
+            - api-lint
+      - api-syntax-check:
+          requires:
+            - api-test
+
+  # ── App pipeline ──────────────────────────────────────────────────────────
+  app-pipeline:
+    jobs:
+      - app-lint:
+          filters:
+            branches:
+              only:
+                - main
+                - develop
+      - app-test:
+          requires:
+            - app-lint
+      - app-build:
+          requires:
+            - app-test
