@@ -80,9 +80,9 @@ jobs:
 
       - name: Print bundle size
         run: |
-          echo "=== dist/ contents ===" 
-          du -sh dist/
-          echo "=== JS files ===" 
-          find dist/ -name "*.js" -exec du -h {} \; | sort -rh | head -20
-          echo "=== CSS files ===" 
-          find dist/ -name "*.css" -exec du -h {} \; | sort -rh | head -10
+          echo "=== dist/ contents ==="
+          du -sh "$GITHUB_WORKSPACE/dist/"
+          echo "=== JS files ==="
+          find "$GITHUB_WORKSPACE/dist/" -name "*.js" -exec du -h {} \; | sort -rh | head -20
+          echo "=== CSS files ==="
+          find "$GITHUB_WORKSPACE/dist/" -name "*.css" -exec du -h {} \; | sort -rh | head -10
