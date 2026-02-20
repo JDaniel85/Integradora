@@ -3,14 +3,9 @@ name: VetSync App – CI
 on:
   push:
     branches: [main, develop]
-    paths:
-      - "vet-sync-app/**"
-      - ".github/workflows/app-ci.yml"
   pull_request:
     branches: [main, develop]
-    paths:
-      - "vet-sync-app/**"
-      - ".github/workflows/app-ci.yml"
+  workflow_dispatch:
 
 defaults:
   run:

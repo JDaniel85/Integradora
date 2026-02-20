@@ -3,14 +3,9 @@ name: VetSync API – CI
 on:
   push:
     branches: [main, develop]
-    paths:
-      - "vet-sync-api/**"
-      - ".github/workflows/api-ci.yml"
   pull_request:
     branches: [main, develop]
-    paths:
-      - "vet-sync-api/**"
-      - ".github/workflows/api-ci.yml"
+  workflow_dispatch:
 
 defaults:
   run:
