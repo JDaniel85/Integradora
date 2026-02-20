@@ -39,9 +39,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          # Cache keyed to package.json until a lock file is committed
-          cache: "npm"
-          cache-dependency-path: "vet-sync-api/package.json"
 
       - name: Install dependencies
         # Use "npm ci" once a package-lock.json is committed; "npm install" until then
